@@ -1,0 +1,2 @@
+# BlazorShared
+Blazor shared component
