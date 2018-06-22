@@ -1,0 +1,123 @@
+﻿@page "/fetchdata"
+
+@addTagHelper *, BlazorShared
+@inject HttpClient Http
+
+@using System.ComponentModel.DataAnnotations;
+@using System.Collections.Specialized;
+@using BlazorApp.Common;
+@using System.Collections;
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @*<table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Temp. (C)</th>
+                    <th>Temp. (F)</th>
+                    <th>Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var forecast in forecasts)
+                {
+                    <tr>
+                        <th scope="row">@forecast.Date.ToShortDateString()</th>
+                        <td>@forecast.TemperatureC</td>
+                        <td>@forecast.TemperatureF</td>
+                        <td>@forecast.Summary</td>
+                    </tr>
+                }
+            </tbody>
+        </table>*@
+}
+
+<BlazorTable DataSource="@Results" ExtraColumns="@extraColumns" ColumnFormats="@colFormat" CellClasses="@cellClass"></BlazorTable>
+<BlazorPager CurrentPage="@CurrentPage" PageCount="@PageCount" PageSize="@PageSize" RowCount="@RowCount" PageChanged="@PagerPageChanged"></BlazorPager>
+
+@functions{
+
+    WeatherForecast[] forecasts;
+    IList Results { get; set; }
+
+    PagedResult<WeatherForecast> Result;
+
+    NameValueCollection colFormat;
+    NameValueCollection cellClass;
+
+    NameValueCollection extraColumns;
+
+    int CurrentPage = 1;
+    int PageCount = 10;
+    int PageSize = 10;
+    int RowCount = 100;
+
+    protected override async Task OnInitAsync()
+    {
+        Console.WriteLine("parent init");
+
+        colFormat = new NameValueCollection();
+
+        colFormat.Add("Date", "{0:d}");
+        colFormat.Add("TemperatureC", "{0:$#.##}");
+        colFormat.Add("TemperatureF", "{0:#,###}");
+
+        cellClass = new NameValueCollection();
+        cellClass.Add("TemperatureC", "text-right");
+        cellClass.Add("TemperatureF", "text-right");
+
+        extraColumns = new NameValueCollection();
+
+        //extraColumns.Add("", "<ActionLinkButton Action = \"Details\" Route = \"/students\" RouteValue = \"{Id}\" ></ ActionLinkButton>" +
+        //                     "<ActionLinkButton Action = \"Edit\" Route = \"/students\" RouteValue = \"{Id}\" ></ ActionLinkButton>" +
+        //                     "<ActionLinkButton Action = \"Delete\" Route = \"/students\" RouteValue = \"{Id}\" ></ ActionLinkButton>");
+
+        extraColumns.Add("", "<a class=\"btn btn-link pt-0 pb-0\" href=\"/counter\"><span class=\"oi oi-eye text-primary\" data-toggle=\"tooltip\" title=\"View\"></span></a>" +
+                             "<a class=\"btn btn-link pt-0 pb-0\" href=\"/counter\"><span class=\"oi oi-pencil text-warning\" data-toggle=\"tooltip\" title=\"Edit\"></span></a>" +
+                             "<a class=\"btn btn-link pt-0 pb-0\" href=\"/counter\"><span class=\"oi oi-trash text-danger\" data-toggle=\"tooltip\" title=\"Delete\"></span></a>");
+
+        //extraColumns.Add(" ", "<b>t</b>est<button onclick='dd'>测试{Date}</button><table><tr><td>1</td><td>2</td></tr></table>");
+
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (forecasts == null)
+            forecasts = await Http.GetJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+
+        Result = forecasts.GetPaged(CurrentPage, PageSize);
+
+        Results = Result.Results;
+        PageCount = Result.PageCount;
+        RowCount = Result.RowCount;
+    }
+
+    protected void PagerPageChanged(int page)
+    {
+        CurrentPage = page;
+
+        LoadDataAsync().Wait();
+        StateHasChanged();
+    }
+
+    class WeatherForecast
+    {
+        [Display(Name = "日期")]
+        public DateTime Date { get; set; }
+
+        [Display(Name = "摄氏温度")]
+        public int TemperatureC { get; set; }
+        public int TemperatureF { get; set; }
+        public string Summary { get; set; }
+    }
+}
