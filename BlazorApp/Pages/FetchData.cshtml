@@ -8,6 +8,9 @@
 @using BlazorApp.Common;
 @using System.Collections;
 
+
+
+
 <h1>Weather forecast</h1>
 
 <p>This component demonstrates fetching data from the server.</p>
@@ -41,7 +44,7 @@ else
         </table>*@
 }
 
-<BlazorTable DataSource="@Results" ExtraColumns="@extraColumns" ColumnFormats="@colFormat" CellClasses="@cellClass"></BlazorTable>
+<BlazorTable DataSource="@Results" ExtraColumns="@extraColumns" ColumnFormats="@colFormat" CellClasses="@cellClass" AllowSort="true"></BlazorTable>
 <BlazorPager CurrentPage="@CurrentPage" PageCount="@PageCount" PageSize="@PageSize" RowCount="@RowCount" PageChanged="@PagerPageChanged"></BlazorPager>
 
 @functions{

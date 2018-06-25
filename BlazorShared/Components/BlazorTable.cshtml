@@ -6,6 +6,26 @@
 @using BlazorShared.Helper;
 @using System.Text.RegularExpressions;
 
+@*<style>
+    .Sorting {
+        cursor: pointer;
+    }
+
+    .SortDown:after {
+        position:absolute;
+        right:0.5em;
+        content: " ▾";
+        font-family: Arial, sans-serif;
+    }
+
+    .SortUp:after {
+        position: absolute;
+        right: 0.5em;
+        content: " ▴";
+        font-family: Arial, sans-serif;
+    }
+</style>*@
+
 @if (DataSource == null)
 {
     <p><em>数据加载中，请稍候...</em></p>
@@ -17,9 +37,29 @@ else
             <tr>
                 @foreach (var col in DisplayColumns)
                 {
-                    <th scope="col">
-                        @col.DisplayName
-                    </th>
+                    if (!col.Sortable)
+                    {
+                        <th scope="col" onclick="@(()=>DoSort(col.FieldName))">
+                            @col.DisplayName
+                            @if (col.FieldName == SortFieldName)
+                            {
+                                if (SortDirection)
+                                {
+                                    <span class="oi oi-sort-ascending" title="icon name" aria-hidden="true"></span>
+                                }
+                                else
+                                {
+                                    <span class="oi oi-sort-descending" title="icon name" aria-hidden="true"></span>
+                                }
+                            }
+                        </th>
+                    }
+                    else
+                    {
+                        <th scope="col">
+                            @col.DisplayName
+                        </th>
+                    }
                 }
             </tr>
         </thead>
@@ -77,9 +117,17 @@ else
     [Parameter]
     protected NameValueCollection CellClasses { get; set; } = new NameValueCollection();
 
+    [Parameter]
+    protected bool AllowSort { get; set; }
+
+    [Parameter]
+    protected Action<string, string> SortingChanged { get; set; }
+
     private Type ElementType { get; set; }
     private PropertyInfo[] ElementProps { get; set; }
     internal List<GridViewColumn> DisplayColumns { get; set; }
+    private string SortFieldName { get; set; }
+    internal bool SortDirection;
 
     private char delimeter = ',';
 
@@ -130,7 +178,7 @@ else
             });
         }
 
-        Console.WriteLine($"DisplayColumn Count: {DisplayColumns.Count()}");
+        //Console.WriteLine($"DisplayColumn Count: {DisplayColumns.Count()}");
     }
 
     private string[] GetColumns(PropertyInfo[] props, string columns)
@@ -193,106 +241,21 @@ else
         return OriginalString;
     }
 
-    //private RenderFragment GetRawHtml(string htmlString)
-    //{
-    //    return builder =>
-    //    {
-    //        var doc = htmlString.HtmlDocument();
-    //        var node = doc.DocumentNode;
+    internal void DoSort(string FieldName)
+    {
+        Console.WriteLine(FieldName);
+        if (SortFieldName == FieldName)
+        {
+            SortDirection = !SortDirection;
+        }
+        else
+        {
+            SortFieldName = FieldName;
+            SortDirection = false;
+        }
 
-    //        int sequence = 0;
+        Console.WriteLine(SortDirection);
 
-    //        renderNode(builder,node, sequence);
-    //    };
-    //}
-
-    //private void renderNode(RenderTreeBuilder builder, HtmlNode node, int sequence)
-    //{
-    //    if (node.NodeType == HtmlNodeType.Text)
-    //    {
-    //        builder.AddContent(sequence, node.InnerText);
-    //        return;
-    //    }
-
-    //    if (node.NodeType == HtmlNodeType.Document)
-    //    {
-    //        foreach (var child in node.ChildNodes)
-    //        {
-    //            renderNode(builder, child, sequence);
-    //        }
-    //        return;
-    //    }
-
-    //    if (node.NodeType != HtmlNodeType.Element)
-    //        return;
-
-    //    builder.OpenElement(sequence, node.Name);
-
-    //    foreach (var attr in node.Attributes)
-    //    {
-    //        builder.AddAttribute(sequence , attr.Name, attr.Value);
-    //    }
-
-    //    foreach (var child in node.ChildNodes)
-    //    {
-    //        renderNode(builder, child, sequence);
-    //    }
-
-    //    builder.CloseElement();
-    //}
-
-    //private void renderNode(RenderTreeBuilder builder, HtmlNode node, int sequence)
-    //{
-    //    if (node.NodeType == HtmlNodeType.Text)
-    //    {
-    //        builder.AddContent(sequence += 1, node.InnerText);
-    //        return;
-    //    }
-
-    //    if(node.NodeType==HtmlNodeType.Document)
-    //    {
-    //        foreach (var child in node.ChildNodes)
-    //        {
-    //            renderNode(builder, child, sequence);
-    //        }
-    //        return;
-    //    }
-
-    //    if (node.NodeType != HtmlNodeType.Element)
-    //        return;
-
-    //    builder.OpenElement(sequence += 1, node.Name);
-
-    //    foreach (var attr in node.Attributes)
-    //    {
-    //        builder.AddAttribute(sequence += 1, attr.Name, attr.Value);
-    //    }
-
-    //    foreach (var child in node.ChildNodes)
-    //    {
-    //        renderNode(builder, child, sequence);
-    //    }
-
-    //    builder.CloseElement();
-    //}
-
-    //public static Type GetAnyElementType(Type type)
-    //{
-    //    // Type is Array
-    //    // short-circuit if you expect lots of arrays
-    //    if (type.IsArray)
-    //        return type.GetElementType();
-
-    //    // type is IEnumerable<T>;
-    //    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-    //        return type.GetGenericArguments()[0];
-
-    //    // type implements/extends IEnumerable<T>;
-    //    var enumType = type.GetInterfaces()
-    //                            .Where(t => t.IsGenericType &&
-    //                                   t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-    //                            .Select(t => t.GenericTypeArguments[0]).FirstOrDefault();
-    //    return enumType ?? type;
-    //}
-
+        StateHasChanged();
+    }
 }
